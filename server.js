@@ -1,34 +1,28 @@
 const express = require("express");
 const app = express();
 const simpsons = require("./simpsons.json");
-const logging = require("./middleware/logging");
-const auth = require("./middleware/auth");
 
-// goes from express.static -> middleware -> app.get
+simpsons.forEach((item, index) => {
+  item.id = index + 1;
+});
 
-// handles static file middleware
-app.use(express.static("public"));
+app.use((req, res, next) => {
+  console.log("new request");
+  next();
+});
 
-// convert the body to json
-app.use(express.json()); 
+app.use((req, res, next) => {
+  req.simpsons = simpsons;
+  next();
+});
 
-// middleware (always a function) but you must call next in order for the middleware to allow you pass to the route
-// middleware is often used for checks and validations to ensure everything is good before the code is run
+app.use(express.json());
 
-// logging middleware
-app.use(logging);
+// to bring in routes files
+app.use("/get", require("./routes/get"));
+app.use("/delete", require("./routes/delete"));
+app.use("/add", require("./routes/add"))
 
-// api key validation middleware
-app.use(auth);
-
-// route = takes 2 things: the url that want to respond to and a callback that runs once the request is detected
-// in the callback, you send 2 parameters: request (req) and response (rep)
-
-// route middleware
-app.use("/", require("./routes/quotes"));
-
-
-// should include the port number and a callback but you should insert the port dynamically
 const port = process.env.PORT || 6001;
 app.listen(port, () => {
   console.log("The server is running!");
